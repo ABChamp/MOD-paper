@@ -1,3 +1,4 @@
 plot/
 raw_data/
 venv/
+__pycache__/
