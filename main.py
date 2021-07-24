@@ -2,26 +2,11 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import pairwise_distances
+import helper
 
 tune_round = 3
 selected_nn = 3
 noise_percent = 0.20
-
-def get_random_noise(dataShape, comb_maxmin):
-    print(f"get random noise args: {dataShape}, {comb_maxmin.shape}")
-    # 0 is row
-    # 1 is column
-    total_noise = int(np.ceil(dataShape[0]*noise_percent))
-    # random for each
-    _rd = None
-    for i in range(comb_maxmin.shape[0]):
-        _p = np.random.randint(comb_maxmin[i][0], comb_maxmin[i][1], (total_noise, 1))
-        if _rd is None:
-            _rd = _p
-        else:
-            _rd = np.hstack((_rd, _p))
-    return _rd
-
 
 def vizz(data_point, name=""):
   fig, ax = plt.subplots()
@@ -46,22 +31,20 @@ def algorithm1(dps):
             _dps[dpidx, :last_columns_index] = new_dp
         
         vizz(_dps, f'./plot/{i}.png')
-        
     return _dps
 
-def get_comb_maxmin_each_column(X):
-    _get_min = X.min(axis=0)
-    _get_max = X.max(axis=0)
-    return np.vstack((_get_min, _get_max)).T
-
+def algorithm2(dps, dps_prime):
+    last_columns_index = dps.shape[1]-1
+    dist_sc = np.linalg.norm(dps[::, :last_columns_index]-dps_prime[::, :last_columns_index], axis=1)
+    
 if __name__ == '__main__':
     fileName = 'a1'
     data_path = f'./data/{fileName}.csv'
     X = pd.read_csv(data_path).to_numpy()
     #vizz(X, f'./plot/{fileName}-raw_data.png')
-    comb_maxmin = get_comb_maxmin_each_column(X)
+    comb_maxmin = helper.get_comb_maxmin_each_column(X)
 
-    _rd = get_random_noise(X.shape, comb_maxmin) 
+    _rd = helper.get_random_noise(X.shape, comb_maxmin, noise_percent) 
 
     X = np.vstack((X, _rd))
     # origin_training_data = origin_data.loc[:, ['DFA', 'PPE']]
@@ -71,5 +54,7 @@ if __name__ == '__main__':
     dps = X.copy()
     dps_default_idx = np.arange(dps.shape[0])
     dps = np.append(dps, dps_default_idx.reshape(dps_default_idx.shape[0], 1), 1)
-    algorithm1(dps)
+    # call algorithm
+    X_prime = algorithm1(dps)
+    algorithm2(dps, X_prime)
 
